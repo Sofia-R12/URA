@@ -1,7 +1,7 @@
-int pinMEF1 = 10; //positivo DO MOTOR ESQUERDO FRONT
+int pinMEF1 = 3; //positivo DO MOTOR ESQUERDO FRONT
 int pinMEF2 = 11;//negativo
-int pinMDF1 = 2; //positivo DO MOTOR DIREITO FRONT
-int pinMDF2 = 4; //negativo
+int pinMDF1 = 4; //positivo DO MOTOR DIREITO FRONT
+int pinMDF2 = 2; //negativo
 int pinMEB1 = 7; //positivo DO MOTOR ESQUERDO BACK
 int pinMEB2 = 5; //negativo
 int pinMDB1 = 6; //positivo DO MOTOR DIREITO BACK
