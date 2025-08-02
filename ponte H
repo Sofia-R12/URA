@@ -1,0 +1,85 @@
+int pinMEF1 = 10; //positivo DO MOTOR ESQUERDO FRONT
+int pinMEF2 = 11;//negativo
+int pinMDF1 = 2; //positivo DO MOTOR DIREITO FRONT
+int pinMDF2 = 4; //negativo
+int pinMEB1 = 7; //positivo DO MOTOR ESQUERDO BACK
+int pinMEB2 = 5; //negativo
+int pinMDB1 = 6; //positivo DO MOTOR DIREITO BACK
+int pinMDB2 = 9; //negativo
+
+
+void setup() {
+  pinMode(pinMEF1, OUTPUT);
+  pinMode(pinMEF2, OUTPUT);
+  pinMode(pinMDF1, OUTPUT);
+  pinMode(pinMDF2, OUTPUT);
+  pinMode(pinMEB1, OUTPUT);
+  pinMode(pinMEB2, OUTPUT);
+  pinMode(pinMDB1, OUTPUT);
+  pinMode(pinMDB2, OUTPUT);
+
+}
+
+void loop() {
+    digitalWrite(pinMEF1, HIGH); 
+    digitalWrite(pinMEF2, LOW);
+    digitalWrite(pinMDF1, HIGH);
+    digitalWrite(pinMDF2, LOW);
+    digitalWrite(pinMEB1, HIGH); 
+    digitalWrite(pinMEB2, LOW);
+    digitalWrite(pinMDB1, HIGH);
+    digitalWrite(pinMDB2, LOW);
+    delay (3000);
+
+    digitalWrite(pinMEF1, LOW); 
+    digitalWrite(pinMEF2, LOW);
+    digitalWrite(pinMDF1, LOW);
+    digitalWrite(pinMDF2, LOW);
+    digitalWrite(pinMEB1, LOW); 
+    digitalWrite(pinMEB2, LOW);
+    digitalWrite(pinMDB1, LOW);
+    digitalWrite(pinMDB2, LOW);
+    delay(1500);
+
+    digitalWrite(pinMEF1, LOW); 
+    digitalWrite(pinMEF2, HIGH);
+    digitalWrite(pinMDF1, LOW);
+    digitalWrite(pinMDF2, HIGH);
+    digitalWrite(pinMEB1, LOW); 
+    digitalWrite(pinMEB2, HIGH);
+    digitalWrite(pinMDB1, LOW);
+    digitalWrite(pinMDB2, HIGH);
+    delay (3000);
+
+    digitalWrite(pinMEF1, LOW); 
+    digitalWrite(pinMEF2, LOW);
+    digitalWrite(pinMDF1, LOW);
+    digitalWrite(pinMDF2, LOW);
+    digitalWrite(pinMEB1, LOW); 
+    digitalWrite(pinMEB2, LOW);
+    digitalWrite(pinMDB1, LOW);
+    digitalWrite(pinMDB2, LOW);
+    delay(1500);
+
+    digitalWrite(pinMEF1, LOW); 
+    digitalWrite(pinMEF2, HIGH);
+    digitalWrite(pinMDF1, HIGH);
+    digitalWrite(pinMDF2, LOW);
+    digitalWrite(pinMEB1, LOW); 
+    digitalWrite(pinMEB2, HIGH);
+    digitalWrite(pinMDB1, HIGH);
+    digitalWrite(pinMDB2, LOW);
+    delay (3000);
+
+    digitalWrite(pinMEF1, LOW); 
+    digitalWrite(pinMEF2, LOW);
+    digitalWrite(pinMDF1, LOW);
+    digitalWrite(pinMDF2, LOW);
+    digitalWrite(pinMEB1, LOW); 
+    digitalWrite(pinMEB2, LOW);
+    digitalWrite(pinMDB1, LOW);
+    digitalWrite(pinMDB2, LOW);
+    delay(1500);
+
+
+}
