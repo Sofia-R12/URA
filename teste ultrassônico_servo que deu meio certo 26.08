@@ -1,0 +1,167 @@
+#include <Servo.h>
+#include <NewPing.h>
+
+//Ultrassonico frente
+#define TRIGFRENTE 13
+#define ECHOFRENTE 12
+
+//Pinos dos motores
+int pinMA1 = 6;
+int pinMA2 = 5;
+int pinMB1 = 10;
+int pinMB2 = 11;
+
+//Variaveis globais
+Servo servoM; //Faz um objeto do servo motor
+NewPing sonic(TRIGFRENTE, ECHOFRENTE);// Faz um objeto do sensor __ Não tem que fazer dois objetos?
+int distanciaFrente = 0; // distâcia que o sensor da frente está constantemente medindo
+int distanciaLados = 0; // distância que o sensor do servo está constantemente medindo
+int distanciaD = 0; // distância guardada quando o sensor vai verificar o lado direito
+int distanciaE = 0; // distância guardada quando o sensor vai verificar o lado esquerdo
+int angulo = 90;
+bool verificar = false; // Estamos iniciando com ele como falso, pois somente quando ele for verdadeiro é que o carro irá girar para os lados
+bool verificarReiniciar = true; // É o que fará o código zerar assim que o carro conseguir passar de um obstáculo e voltar ao caminho normal.
+
+//Tempos
+unsigned long tempAntFrente = 0;
+unsigned long tempAnt = 0; // Para o sensor em cima do servo M
+unsigned long tempAnt2 = 0; // As atualizações para cada novo tempo estão enumeradas.
+unsigned long tempAnt3 = 0; // vamos usar esses tempos em vários if's que podem ocorrer ao mesmo tempo, então para evitarmos possíveis erros com 
+unsigned long tempAnt3_5 = 0; // a atualização dos valores, fizemos vários valores de atualização (Se fossem poucos if's, ou condições encadeadas,... OBS: é 4.5 pq percebemos mais tarde que ia precisar de mais um tempo.
+unsigned long tempAnt4 = 0; //... poderíamos utilizar apenas o tempAnt)
+unsigned long tempAnt5 = 0; 
+unsigned long tempAnt6 = 0;
+unsigned long tempAnt7 = 0;
+
+void setup() {
+  Serial.begin(9600);
+  servoM.attach(3); // está dizendo qual porta do servo motor está sendo usada, *eu acho??
+  servoM.write(angulo); // puramente por estética
+
+  pinMode(pinMA1, OUTPUT);
+  pinMode(pinMA2, OUTPUT);
+  pinMode(pinMB1, OUTPUT);
+  pinMode(pinMB2, OUTPUT); // Não precisamos explicar também que os sensores são input? 
+
+}
+
+void loop() {
+
+
+  if(millis() - tempAntFrente >= 1000){
+    tempAntFrente = millis();
+    distanciaFrente = sonic.ping_cm();// detecta a distância e converte em cm, *eu acho
+    Serial.print("Distância da Frente em (cm): " ); // o nome que antecederá o valor
+    Serial.println(distanciaFrente);
+  }
+
+  if(verificarReiniciar == true){ // Se não houver nada na frente, o carro segue o seu caminho inicial.
+    digitalWrite(pinMA1, HIGH); // Vemos isso aplicado no fim do código, onde é feito as verificações dos valores dos sensores.
+    digitalWrite(pinMA2, LOW);
+    digitalWrite(pinMB1, HIGH);
+    digitalWrite(pinMB2, LOW);
+  }
+
+  /*if(millis() - tempAnt >= 1000){
+    tempAnt = millis();
+    distanciaFrente = sonic.ping_cm();
+    Serial.print("Distância em (cm): " );
+    Serial.println(distanciaFrente);
+  }*/
+
+  if(distanciaFrente <= 15){ // Vamos conversar sobre a distância que será escolhida
+    verificar = true;
+    verificarReiniciar = false;
+    digitalWrite(pinMA1, LOW); // se for encontrado algum obstáculo na frente do carro, ele deve parar totalmente, 
+    digitalWrite(pinMA2, LOW); // não virar ou continuar andando.
+    digitalWrite(pinMB1, LOW);
+    digitalWrite(pinMB2, LOW);
+  }
+
+  if(verificar){ // É a mesma coisa de falar if (verificar == true); E portanto vamos começar a girar o servo ou o carro.
+    if(distanciaD == 0 && millis() - tempAnt2 >= 100){ // distancia == 0 (comparação) quer dizer que nada foi computado nessa função, ou que essa função não foi acionada.
+      //verificarReiniciar = false; (talvez colocaremos mais um só por segurança. São as paranoias, sabem) 
+      for (angulo = 90; angulo < 180; angulo += 1) { // Comando que muda a posição do servo de 90° para 180°
+      servoM.write(angulo); // Comando para angulo específico
+      delay(15); 
+      distanciaD = distanciaLados;// estamos atualizando a distânciaD, jão que a 'Lados é continuamente atualizada.
+      // Nessa parte estamos apenas fazendo a verificação do lado direito do carro.
+      tempAnt2 = millis();
+    }  }
+    if(millis() - tempAnt2 >= 1000 && distanciaE == 0 && distanciaD != 0){ // distanciaD foi lida e distanciaE ainda não     
+      for (angulo = 180; angulo >= 180; angulo -= 1) { // Comando que muda a posição do servo de 180° para 180°
+      servoM.write(angulo); // Comando para angulo específico
+      delay(15); 
+      //anguloAtual = 180;
+      tempAnt3 = millis();
+      distanciaE = distanciaLados; // Atualizamos a distância do lado esquerdo, já que 'Lados está continuamente verificando a distância
+    }}
+    if(millis() - tempAnt3 >= 1000 && distanciaE != 0){
+        tempAnt3 = millis();
+
+      if(distanciaD > distanciaE){ // se houver mais espaço na direita, o carro irá virar para a direita.
+        
+        if(millis - tempAnt3 >= 1000){ // O carro irá virar para a direita.
+          digitalWrite(pinMA1, HIGH);  // girando girando girando pro lado (direita)
+          digitalWrite(pinMA2, LOW);
+          digitalWrite(pinMB1, LOW);
+          digitalWrite(pinMB2, HIGH);
+          servoM.write(180);// o sensor do servo está olhando agora para o obstáculo que precisamos passar (nesse caso se encontra a esquerda do carro)
+          tempAnt3_5 = millis();
+
+        }
+        if (millis() - tempAnt3_5 > 500) { // Depois de virar o ângulo necessário, irá parar.Temos que levar em consideração o tempo para ele girar apenas 90°, a fim de que ele não dê um 360°. OBS: descobriremos o tempo com testes.
+          digitalWrite(pinMA1, LOW); 
+          digitalWrite(pinMA2, LOW);
+          digitalWrite(pinMB1, LOW);
+          digitalWrite(pinMB2, LOW);
+          tempAnt4 = millis();
+        }
+
+        if (millis() - tempAnt4 > 1000) { // O tempo atualizou e o carro, depois de ter virado, anda reto.
+          digitalWrite(pinMA1, HIGH); 
+          digitalWrite(pinMA2, LOW);
+          digitalWrite(pinMB1, HIGH);
+          digitalWrite(pinMB2, LOW);
+        }
+          // PAREI AQUI!!! OUVIR AUDIOS QUE MANDEI EXPLICANDO CASO HAJA UMA PAREDE NA FRENTE E NO LADO DO CARRO. OBS: ESTUDAR O NEWPING, TÁ DANDO ERRADO.
+        if (distanciaLados > 15) { // Se o obstáculo que está na lateral for ultrapassado pelo carro, o veículo irá voltar a sua posição inicial
+          digitalWrite(pinMA1, LOW); // girando girando girando pro outro (esqueda)
+          digitalWrite(pinMA2, HIGH);
+          digitalWrite(pinMB1, HIGH);
+          digitalWrite(pinMB2, LOW);
+
+          tempAnt5 = millis();
+        }
+
+        if (millis() - tempAnt5 > 200) { // não entendi o pq desse tempo e o pq o carro parou 
+          digitalWrite(pinMA1, LOW);
+          digitalWrite(pinMA2, LOW);
+          digitalWrite(pinMB1, LOW);
+          digitalWrite(pinMB2, LOW);
+
+          tempAnt6 = millis();
+        }
+
+        if (millis() - tempAnt6 > 200) {
+          verificarReiniciar = true; //???
+          distanciaD = 0;
+          distanciaE = 0;
+          verificar = false;
+        }
+      }
+      }else if(distanciaE > distanciaD){ // Se a distância maior for a da esquerda, o carro vira para a esquerda
+        digitalWrite(pinMA1, LOW);   // Nesse caso os IFs com os tempos 3,4,5 e 6 não vão ocorrer?
+        digitalWrite(pinMA2, HIGH);
+        digitalWrite(pinMB1, HIGH);
+        digitalWrite(pinMB2, LOW);
+      }
+      delay(100);  // Não entendi
+      distanciaD = 0;
+      distanciaE = 0;
+      verificar = false; //??
+    }
+  else{
+  servoM.write(90);
+  }
+}
