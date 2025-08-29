@@ -1,0 +1,130 @@
+//JANJÃO, MISTUREI COMENTÁRIOS EM INGLÊS E EM PORT PQ EU TAVA A FIM, GOOD LUCK! ;)
+#include <Servo.h>
+#include <NewPing.h> // biblioteca do ultrassônico
+
+int TRIG_PIN = 9;
+int ECHO_PIN = 8;
+
+int pinoFMDa = 6;
+int pinoFMDb = 5;
+int pinoFMEa = 11;
+int pinoFMEb = 10;
+
+//Referências iniciais
+int DISTANCIA_PARADA = 20;
+int ANGULO_INICIAL = 90;
+
+// Variáveis globais
+Servo servo; // para nomear o servo, precisamos antes escrever "Servo".
+NewPing sensor(TRIG_PIN, ECHO_PIN); // Identifying ECHO and TRIG according to library.
+int distanciaFrente = 0;
+int distanciaDireita = 0;
+int distanciaEsquerda = 0;
+int angulo = ANGULO_INICIAL; // inicialmente, o servo vai estar na posição de 90°
+
+//Vamos usar estados para orientar quando o carro vai andar, parar, varrer o local e decidir.
+int estado = 0; //0 = andando, 1 = parado, 2 = analisando, 3 = Decidindo 
+
+unsigned long ultimaLeitura = 0;
+int tempoanterior = 0; // vamos usar essa variável para a função evitarOb.
+
+void setup() { 
+  Serial.begin(9600);
+  servo.attach(3);// atributes pin 3 to servo according to Servo.h library;
+  servo.write(ANGULO_INICIAL);
+  
+  pinMode(pinoFMDa, OUTPUT);
+  pinMode(pinoFMDb, OUTPUT);
+  pinMode(pinoFMEa, OUTPUT);
+  pinMode(pinoFMEb, OUTPUT);
+
+}
+
+void loop() {
+  //Ler a cada 200ms
+  if (millis() - ultimaLeitura >= 200){
+   ultimaLeitura = millis();
+   distanciaFrente = lerDistancia();
+
+   Serial.println("Distância:");
+   Serial.print(distanciaFrente);
+   Serial.println("cm");
+
+  }
+
+  // Máquina de estados aaaaaa 
+  if (estado == 0){ // 0 é andando. OBS: aqui usamos ""=="" pq vamos atribuir esse valor ao estado, right? 
+   if(distanciaFrente <= DISTANCIA_PARADA && distanciaFrente > 0) { 
+     parar();
+     //virarEsquerda(); 
+     estado = 1; // caso a distância na frente seja diferente de 0, o carrinho vai parar e desviar.
+     Serial.println ("Vai bateeeer!"); 
+    } else {
+      andarFrente();
+    }
+  }
+  else if (estado == 1){ // it stopped
+   evitarOb(); // the car will divert to left, run, go right and continue to follow line.
+   estado = 0;
+  } 
+  }
+  int lerDistancia(){
+    int dist = sensor.ping_cm(); // the read of the sensor according to the library
+    if (dist == 0){ // se a dist for 0, ent retornaremos 200. 
+      return 200;
+    }else{ // se a distância for diferente de 0, vamos retornar a distância medida
+      return dist;// fazemos isso pois, as vezes, o sensor retorna 0 quando há uma grande distância.
+    }
+  }
+
+  void evitarOb(){
+   
+   tempoanterior = millis();
+   //parar();
+   virarEsquerda();
+   if(millis() - tempoanterior <= 500){
+    andarFrente();
+   }
+   virarDireita();
+  } 
+
+
+  void andarFrente() {
+  analogWrite(pinoFMDa, 200);
+  analogWrite(pinoFMDb, 0);
+  analogWrite(pinoFMEa, 250);
+  analogWrite(pinoFMEb, 0);
+ }
+
+  void parar() {
+  analogWrite(pinoFMDa, 0);
+  analogWrite(pinoFMDb, 0);
+  analogWrite(pinoFMEa, 0);
+  analogWrite(pinoFMEb, 0);
+  //delay(3000);
+ }
+
+  void virarDireita() {
+  analogWrite(pinoFMDa, 0);
+  analogWrite(pinoFMDb, 200);
+  analogWrite(pinoFMEa, 250);
+  analogWrite(pinoFMEb, 0);
+   //delay(500);
+   //parar();
+ }
+
+  void virarEsquerda() {
+  analogWrite(pinoFMDa, 200);
+  analogWrite(pinoFMDb, 0);
+  analogWrite(pinoFMEa, 0);
+  analogWrite(pinoFMEb, 200);
+  // delay(500);
+   //parar();
+ }
+
+  void recuar() {
+  analogWrite(pinoFMDa, 200);
+  analogWrite(pinoFMDb, 0);
+  analogWrite(pinoFMEa, 0);
+  analogWrite(pinoFMEb, 250);
+ }
