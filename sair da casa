@@ -1,0 +1,177 @@
+#include <Servo.h>
+#include <NewPing.h>
+
+// Configurações dos pinos
+#define TRIG_PIN 9
+#define ECHO_PIN 8
+#define SERVO_PIN 3
+
+// Pinos dos motores
+const int pinMA1 = 6, pinMA2 = 5;
+const int pinMB1 = 11, pinMB2 = 10;
+
+// Distâncias de referência
+const int DISTANCIA_SEGURO = 20;
+const int DISTANCIA_PARADA = 15;
+const int ANGULO_INICIAL = 90;
+
+// Variáveis globais
+Servo servo;
+NewPing sensor(TRIG_PIN, ECHO_PIN);
+int distanciaFrente = 0;
+int distanciaDireita = 0;
+int distanciaEsquerda = 0;
+int angulo = ANGULO_INICIAL;
+
+// Estados do carrinho
+int estado = 0; // 0=ANDANDO, 1=PARADO, 2=VARRENDO, 3=DECIDINDO
+
+// Tempo da última leitura
+unsigned long ultimaLeitura = 0;
+
+void setup() {
+  Serial.begin(9600);
+  servo.attach(SERVO_PIN);
+  servo.write(ANGULO_INICIAL);
+
+  // Configurar pinos dos motores
+  pinMode(pinMA1, OUTPUT);
+  pinMode(pinMA2, OUTPUT);
+  pinMode(pinMB1, OUTPUT);
+  pinMode(pinMB2, OUTPUT);
+}
+
+void loop() {
+  // Ler distância a cada 200ms
+  if (millis() - ultimaLeitura >= 200) {
+    ultimaLeitura = millis();
+    distanciaFrente = lerDistancia();
+    
+    Serial.print("Distância: ");
+    Serial.print(distanciaFrente);
+    Serial.println(" cm");
+  }
+
+  // Máquina de estados principal
+  if (estado == 0) { // ANDANDO
+    if (distanciaFrente <= DISTANCIA_PARADA && distanciaFrente > 0) {
+      parar();
+      estado = 1; // Muda para PARADO
+      Serial.println("Obstáculo detectado!");
+    } else {
+      andarFrente();
+    }
+  } 
+  else if (estado == 1) { // PARADO
+    estado = 2; // Muda para VARRENDO
+  } 
+  else if (estado == 2) { // VARRENDO
+    varrerAmbiente();
+  } 
+  else if (estado == 3) { // DECIDINDO
+    tomarDecisao();
+    estado = 0; // Volta para ANDANDO
+  }
+}
+
+int lerDistancia() {
+  int dist = sensor.ping_cm();
+  return (dist == 0) ? 200 : dist;
+}
+
+void varrerAmbiente() {
+  // Verificar lado direito (90° a 180°)
+  for (angulo = 90; angulo <= 180; angulo += 5) {
+    servo.write(angulo);
+    delay(50);
+  }
+  distanciaDireita = lerDistancia();
+  delay(300);
+  Serial.print("Direita: ");
+  Serial.print(distanciaDireita);
+  Serial.println(" cm");
+
+  // Verificar lado esquerdo (180° a 0°)
+  for (angulo = 180; angulo >= 0; angulo -= 5) {
+    servo.write(angulo);
+    delay(50);
+  }
+  distanciaEsquerda = lerDistancia();
+  delay(300);
+  Serial.print("Esquerda: ");
+  Serial.print(distanciaEsquerda);
+  Serial.println(" cm");
+
+  // Voltar para posição inicial (0° a 90°)
+  for (angulo = 0; angulo <= 90; angulo += 5) {
+    servo.write(angulo);
+    delay(50);
+  }
+  
+  estado = 3; // Muda para DECIDINDO
+}
+
+void tomarDecisao() {
+  Serial.print("Decisão - D: ");
+  Serial.print(distanciaDireita);
+  Serial.print(" cm, E: ");
+  Serial.print(distanciaEsquerda);
+  Serial.println(" cm");
+  
+  if (distanciaDireita > distanciaEsquerda && distanciaDireita > DISTANCIA_SEGURO) {
+    Serial.println("Virando DIREITA");
+    virarDireita();
+  } else if (distanciaEsquerda > DISTANCIA_SEGURO) {
+    Serial.println("Virando ESQUERDA");
+    virarEsquerda();
+  } else {
+    Serial.println("Recuando");
+    recuar();
+    delay(1000);
+    parar();
+  }
+  
+  // Reset das distâncias laterais
+  distanciaDireita = 0;
+  distanciaEsquerda = 0;
+}
+
+// Funções de movimento
+void andarFrente() {
+  digitalWrite(pinMA1, HIGH);
+  digitalWrite(pinMA2, LOW);
+  digitalWrite(pinMB1, HIGH);
+  digitalWrite(pinMB2, LOW);
+}
+
+void parar() {
+  digitalWrite(pinMA1, LOW);
+  digitalWrite(pinMA2, LOW);
+  digitalWrite(pinMB1, LOW);
+  digitalWrite(pinMB2, LOW);
+}
+
+void virarDireita() {
+  digitalWrite(pinMA1, HIGH);
+  digitalWrite(pinMA2, LOW);
+  digitalWrite(pinMB1, LOW);
+  digitalWrite(pinMB2, HIGH);
+  delay(500);
+  parar();
+}
+
+void virarEsquerda() {
+  digitalWrite(pinMA1, LOW);
+  digitalWrite(pinMA2, HIGH);
+  digitalWrite(pinMB1, HIGH);
+  digitalWrite(pinMB2, LOW);
+  delay(500);
+  parar();
+}
+
+void recuar() {
+  digitalWrite(pinMA1, LOW);
+  digitalWrite(pinMA2, HIGH);
+  digitalWrite(pinMB1, LOW);
+  digitalWrite(pinMB2, HIGH);
+}
