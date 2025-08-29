@@ -1,5 +1,5 @@
 //cdigo para sair da casa
-
+// é uma mistura de sensor óptico e ultrassônico
 #include <Servo.h>
 #include <NewPing.h>
 
